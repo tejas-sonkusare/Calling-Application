@@ -5,6 +5,7 @@ import './Home.css';
 function Home({ onJoinRoom }) {
   const [roomId, setRoomId] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const generateRoomId = () => {
     // Generate a random room ID
@@ -23,8 +24,6 @@ function Home({ onJoinRoom }) {
     }
   };
 
-  const [copied, setCopied] = useState(false);
-
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
     setCopied(true);
@@ -40,7 +39,7 @@ function Home({ onJoinRoom }) {
         </div>
         <p className="subtitle">Secure end-to-end encrypted video calling</p>
         
-        {!isCreating && !roomId ? (
+        {!isCreating ? (
           <div className="home-actions">
             <button onClick={handleCreateRoom} className="btn btn-primary">
               Create Room
@@ -56,8 +55,13 @@ function Home({ onJoinRoom }) {
                 onChange={(e) => setRoomId(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleJoinRoom()}
                 className="room-input"
+                autoFocus
               />
-              <button onClick={handleJoinRoom} className="btn btn-secondary">
+              <button 
+                onClick={handleJoinRoom} 
+                className="btn btn-secondary"
+                disabled={!roomId.trim()}
+              >
                 Join Room
               </button>
             </div>

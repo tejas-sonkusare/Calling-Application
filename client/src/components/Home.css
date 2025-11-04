@@ -165,11 +165,16 @@
   border: 2px solid transparent;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: #e0e0e0;
   border-color: #667eea;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .divider {
