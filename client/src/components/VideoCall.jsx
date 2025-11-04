@@ -94,6 +94,7 @@ function VideoCall({ roomId, onLeave }) {
 
       // Handle remote stream
       pc.ontrack = (event) => {
+        console.log('✅ Remote stream received!');
         setRemoteStream(event.streams[0]);
         setConnectionStatus('Connected');
         setIsLoading(false);
@@ -112,7 +113,9 @@ function VideoCall({ roomId, onLeave }) {
       // Handle connection state changes
       pc.onconnectionstatechange = () => {
         const state = pc.connectionState;
-        setConnectionStatus(state);
+        console.log('🔗 WebRTC connection state:', state);
+        setConnectionStatus(state.charAt(0).toUpperCase() + state.slice(1));
+        
         if (state === 'connected') {
           setIsLoading(false);
           if (!callTimerRef.current) {
@@ -121,6 +124,10 @@ function VideoCall({ roomId, onLeave }) {
           if (!statsIntervalRef.current) {
             startStatsMonitoring(pc);
           }
+        } else if (state === 'connecting') {
+          setConnectionStatus('Connecting...');
+        } else if (state === 'checking') {
+          setConnectionStatus('Checking connection...');
         } else if (state === 'disconnected' || state === 'failed') {
           setConnectionStatus('Connection Lost');
           stopCallTimer();
@@ -130,23 +137,31 @@ function VideoCall({ roomId, onLeave }) {
 
       // Join room
       if (socketRef.current) {
+        console.log('📡 Joining room:', roomId);
         socketRef.current.emit('join-room', roomId);
 
         // Listen for room users
         socketRef.current.on('room-users', async ({ users }) => {
+          console.log('👥 Users in room:', users);
           if (users.length > 0) {
             // Another user is already in the room, create offer
+            console.log('📤 Creating offer for existing user...');
             const offer = await createOffer(pc);
             socketRef.current.emit('offer', {
               roomId,
               offer
             });
+          } else {
+            console.log('⏳ Waiting for peer to join...');
+            setConnectionStatus('Waiting for peer...');
           }
         });
 
         // Listen for user joined
-        socketRef.current.on('user-joined', async () => {
+        socketRef.current.on('user-joined', async ({ userId }) => {
+          console.log('👋 New user joined:', userId);
           // New user joined, create offer
+          console.log('📤 Creating offer for new user...');
           const offer = await createOffer(pc);
           socketRef.current.emit('offer', {
             roomId,
@@ -155,8 +170,10 @@ function VideoCall({ roomId, onLeave }) {
         });
 
         // Handle incoming offer
-        socketRef.current.on('offer', async ({ offer }) => {
+        socketRef.current.on('offer', async ({ offer, from }) => {
+          console.log('📥 Received offer from:', from);
           const answer = await createAnswer(pc, offer);
+          console.log('📤 Sending answer...');
           socketRef.current.emit('answer', {
             roomId,
             answer
@@ -164,14 +181,19 @@ function VideoCall({ roomId, onLeave }) {
         });
 
         // Handle incoming answer
-        socketRef.current.on('answer', async ({ answer }) => {
+        socketRef.current.on('answer', async ({ answer, from }) => {
+          console.log('📥 Received answer from:', from);
           await setRemoteDescription(pc, answer);
         });
 
         // Handle incoming ICE candidate
-        socketRef.current.on('ice-candidate', async ({ candidate }) => {
+        socketRef.current.on('ice-candidate', async ({ candidate, from }) => {
+          console.log('🧊 Received ICE candidate from:', from);
           await addIceCandidate(pc, candidate);
         });
+      } else {
+        console.error('❌ Socket not initialized!');
+        setConnectionStatus('Socket Error');
       }
     } catch (error) {
       console.error('Error starting call:', error);
@@ -358,8 +380,8 @@ function VideoCall({ roomId, onLeave }) {
                 <div className="loading-animation">
                   <div className="spinner"></div>
                 </div>
-                <p>Waiting for peer to join...</p>
-                <p className="status">{connectionStatus}</p>
+                <p>{connectionStatus === 'Waiting for peer...' ? 'Waiting for peer to join...' : connectionStatus}</p>
+                <p className="status">Check browser console (F12) for details</p>
               </div>
             )}
           </div>
