@@ -282,7 +282,18 @@ function VideoCall({ roomId, onLeave }) {
   useEffect(() => {
     initializeSocket();
     socketRef.current = getSocket();
-    startCall();
+    
+    // Wait for socket connection before starting call
+    if (socketRef.current) {
+      if (socketRef.current.connected) {
+        startCall();
+      } else {
+        socketRef.current.on('connect', () => {
+          console.log('Socket connected, starting call...');
+          startCall();
+        });
+      }
+    }
 
     return () => {
       cleanup();
