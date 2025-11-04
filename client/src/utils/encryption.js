@@ -28,6 +28,46 @@ export function encryptMessage(message, roomId) {
 }
 
 /**
+ * Encrypt file data (base64 string)
+ * @param {string} fileData - Base64 encoded file data
+ * @param {string} roomId - Room ID used for key derivation
+ * @returns {string} Encrypted file data
+ */
+export function encryptFile(fileData, roomId) {
+  try {
+    const key = deriveKey(roomId);
+    const encrypted = CryptoJS.AES.encrypt(fileData, key).toString();
+    return encrypted;
+  } catch (error) {
+    console.error('File encryption error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Decrypt file data
+ * @param {string} encryptedFileData - Encrypted file data
+ * @param {string} roomId - Room ID used for key derivation
+ * @returns {string} Decrypted base64 file data
+ */
+export function decryptFile(encryptedFileData, roomId) {
+  try {
+    const key = deriveKey(roomId);
+    const decrypted = CryptoJS.AES.decrypt(encryptedFileData, key);
+    const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+    
+    if (!plaintext) {
+      throw new Error('Decryption failed - invalid file data or key');
+    }
+    
+    return plaintext;
+  } catch (error) {
+    console.error('File decryption error:', error);
+    throw error;
+  }
+}
+
+/**
  * Decrypt a message using AES-256
  * @param {string} encryptedMessage - Base64 encoded encrypted message
  * @param {string} roomId - Room ID used for key derivation

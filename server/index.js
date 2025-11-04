@@ -68,7 +68,20 @@ io.on('connection', (socket) => {
   socket.on('chat-message', (data) => {
     socket.to(data.roomId).emit('chat-message', {
       message: data.message,
+      type: data.type || 'text',
+      fileData: data.fileData,
+      fileName: data.fileName,
+      fileSize: data.fileSize,
+      mimeType: data.mimeType,
+      timestamp: data.timestamp,
       from: socket.id
+    });
+  });
+
+  // Handle typing indicator
+  socket.on('typing', (data) => {
+    socket.to(data.roomId).emit('typing', {
+      userId: socket.id
     });
   });
 
