@@ -73,8 +73,20 @@ io.on('connection', (socket) => {
       fileName: data.fileName,
       fileSize: data.fileSize,
       mimeType: data.mimeType,
+      duration: data.duration,
       timestamp: data.timestamp,
+      messageId: data.messageId,
+      replyTo: data.replyTo,
+      reactions: data.reactions,
       from: socket.id
+    });
+  });
+
+  // Handle message read receipts
+  socket.on('message-read', (data) => {
+    socket.to(data.roomId).emit('message-read', {
+      messageId: data.messageId,
+      userId: socket.id
     });
   });
 
